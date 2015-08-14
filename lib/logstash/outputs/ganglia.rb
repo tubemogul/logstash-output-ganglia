@@ -41,6 +41,9 @@ class LogStash::Outputs::Ganglia < LogStash::Outputs::Base
   # Metric slope, represents metric behavior
   config :slope, :validate => %w{zero positive negative both unspecified}, :default => "both"
 
+  # GMetric spoof hostname, expects a value of ip_address:hostname
+  config :hostname, :validate => :string, :default => ""
+
   def register
     require "gmetric"
   end # def register
@@ -60,6 +63,7 @@ class LogStash::Outputs::Ganglia < LogStash::Outputs::Base
       else # int8|uint8|int16|uint16|int32|uint32
         localvalue = event.sprintf(@value).to_i
     end
+
     Ganglia::GMetric.send(@host, @port, {
       :name => event.sprintf(@metric),
       :units => @units,
@@ -68,7 +72,9 @@ class LogStash::Outputs::Ganglia < LogStash::Outputs::Base
       :group => @group,
       :slope => @slope,
       :tmax => @max_interval,
-      :dmax => @lifetime
+      :dmax => @lifetime,
+      :spoof => (not @hostname.empty?),
+      :hostname => @hostname
     })
   end # def receive
 end # class LogStash::Outputs::Ganglia
